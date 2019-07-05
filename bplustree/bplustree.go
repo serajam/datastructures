@@ -69,10 +69,10 @@ func (t *Tree) Insert(val int) {
 	}
 
 	if parent == nil {
-		node = node.splitLeaf(nil, t.Degree, -1)
+		node = node.splitNode(nil, t.Degree, -1)
 		t.Root = node
 	} else {
-		node = node.splitLeaf(parent, t.Degree, nextNodeIndex)
+		node = node.splitNode(parent, t.Degree, nextNodeIndex)
 	}
 
 	return

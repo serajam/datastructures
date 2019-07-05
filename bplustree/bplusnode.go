@@ -32,7 +32,7 @@ func (n treeNode) value(i int) int {
 	return n.values[i]
 }
 
-func (n treeNode) lastKey() int {
+func (n treeNode) lastValue() int {
 	return n.values[n.elementsCount]
 }
 
@@ -95,23 +95,13 @@ func (n *treeNode) mergeRight(node *treeNode) {
 
 }
 
-func (n *treeNode) deleteKey(i int) {
+func (n *treeNode) deleteValue(i int) {
 	var j int
 	for j = i; j < n.elementsCount-1; j++ {
 		n.values[j] = n.values[j+1]
 	}
 	n.values[j] = 0
 	n.elementsCount--
-}
-
-func (n *treeNode) deleteChildren(i int) {
-	var j int
-	for j = i; j <= n.elementsCount; j++ {
-		n.children[j] = n.children[j+1]
-	}
-	n.children[j] = nil
-
-	//n.values = append(n.values[:i], n.values[i+1:]...)
 }
 
 func (n *treeNode) popElement() int {
@@ -174,6 +164,7 @@ func (n *treeNode) deleteSibling(pos int) {
 	n.elementsCount--
 }
 
+// traverse TODO implement more human readable traverse
 func (n treeNode) traverse(lvl int) string {
 
 	s := "|"
@@ -223,70 +214,13 @@ func (n treeNode) hasFreeElement() bool {
 	return n.elementsCount > n.degree-1
 }
 
-func (n *treeNode) splitLeaf(parent *treeNode, degree int, pos int) *treeNode {
-	// if splitting leaf Root
-	if parent == nil {
-		parent = newNode(degree, false)
-	}
-	rightLeaf := newNode(degree, true)
-
-	mid := degree - 1
-
-	// @TODO implement linked list
-	//rightLeaf.prevLeaf = n
-	//rightLeaf.nextLeaf = n.nextLeaf
-	//n.nextLeaf = rightLeaf
-
-	midVal := n.values[mid]
-	n.values[mid] = 0
-	n.elementsCount--
-
-	shift := func() {
-		for i := mid + 1; i < len(n.values); i++ {
-			rightLeaf.values[i-mid] = n.values[i]
-			n.values[i] = 0
-
-			rightLeaf.elementsCount++
-			n.elementsCount--
-		}
-
-		rightLeaf.values[0] = midVal
-		rightLeaf.elementsCount++
-	}
-
-	// split for root
-	if pos == -1 {
-		shift()
-
-		parent.values[parent.elementsCount] = midVal
-		parent.children[parent.elementsCount] = n
-		parent.children[parent.elementsCount+1] = rightLeaf
-		parent.elementsCount++
-
-		return parent
-	}
-
-	shift()
-	for i := parent.elementsCount; i > pos; i-- {
-		parent.values[i] = parent.values[i-1]
-	}
-	parent.values[pos] = midVal
-
-	for i := parent.elementsCount; i > pos; i-- {
-		parent.children[i+1] = parent.children[i]
-	}
-	parent.children[pos+1] = rightLeaf
-	parent.elementsCount++
-
-	return parent
-}
-
 func (n *treeNode) splitNode(parent *treeNode, degree int, pos int) *treeNode {
 	// if splitting leaf Root
 	if parent == nil {
 		parent = newNode(degree, false)
 	}
-	rightNode := newNode(degree, false)
+
+	rightNode := newNode(degree, n.leaf)
 
 	mid := degree - 1
 
@@ -294,26 +228,35 @@ func (n *treeNode) splitNode(parent *treeNode, degree int, pos int) *treeNode {
 	n.values[mid] = 0
 	n.elementsCount--
 
-	shift := func() {
-		for i := mid + 1; i <= n.elementsCount+1; i++ {
-			rightNode.children[i-mid-1] = n.children[i]
-			n.children[i] = nil
+	split := func() {
+		midSlot := 0
+		if !n.leaf {
+			midSlot = 1
+			for i := mid + 1; i <= n.elementsCount+1; i++ {
+				rightNode.children[i-mid-1] = n.children[i]
+				n.children[i] = nil
+			}
 		}
 
-		to := n.elementsCount
+		count := n.elementsCount
 
-		for i := mid + 1; i <= to; i++ {
-			rightNode.values[i-mid-1] = n.values[i]
+		for i := mid + 1; i <= count; i++ {
+			rightNode.values[i-mid-midSlot] = n.values[i]
 			n.values[i] = 0
 
 			rightNode.elementsCount++
 			n.elementsCount--
 		}
+
+		if n.leaf {
+			rightNode.values[0] = midVal
+			rightNode.elementsCount++
+		}
 	}
 
 	// split for root
 	if pos == -1 {
-		shift()
+		split()
 
 		parent.values[parent.elementsCount] = midVal
 		parent.children[parent.elementsCount] = n
@@ -323,7 +266,7 @@ func (n *treeNode) splitNode(parent *treeNode, degree int, pos int) *treeNode {
 		return parent
 	}
 
-	shift()
+	split()
 	for i := parent.elementsCount; i > pos; i-- {
 		parent.values[i] = parent.values[i-1]
 	}
@@ -372,7 +315,7 @@ func (n *treeNode) delete(val int) bool {
 			return false
 		}
 
-		n.deleteKey(i)
+		n.deleteValue(i)
 
 		return true
 	}
@@ -414,7 +357,7 @@ func (n *treeNode) delete(val int) bool {
 		// borrow element from the right
 		if rightSibling := n.sibling(nextNodeIndex + 1); rightSibling != nil && rightSibling.hasFreeElement() {
 			nextNode.insert(rightSibling.value(0))
-			rightSibling.deleteKey(0)
+			rightSibling.deleteValue(0)
 			n.values[nextNodeIndex] = rightSibling.value(0)
 
 			return true
@@ -463,8 +406,8 @@ func (n *treeNode) delete(val int) bool {
 		children := rightSibling.sibling(0)
 		key := rightSibling.value(0)
 
-		rightSibling.deleteChildren(0)
-		rightSibling.deleteKey(0)
+		rightSibling.deleteSibling(0)
+		rightSibling.deleteValue(0)
 
 		nextNode.values[nextNode.elementsCount] = n.value(nextNodeIndex)
 		n.values[nextNodeIndex] = key

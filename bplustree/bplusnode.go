@@ -15,7 +15,7 @@ type treeNode struct {
 	prevLeaf *treeNode
 
 	values   []int
-	children []*treeNode
+	siblings []*treeNode
 }
 
 func newNode(degree int, leaf bool) *treeNode {
@@ -27,7 +27,7 @@ func newNode(degree int, leaf bool) *treeNode {
 	}
 
 	if !leaf {
-		n.children = make([]*treeNode, degree*2)
+		n.siblings = make([]*treeNode, degree*2)
 	}
 
 	return n
@@ -55,13 +55,13 @@ func (n treeNode) keyIndex(val int) int {
 
 func (n *treeNode) mergeLeft(node *treeNode) {
 	if !node.leaf {
-		n.prependElement(n.children[0].values[0])
+		n.prependElement(n.siblings[0].values[0])
 		for i := n.elementsCount; i > 0; i-- {
-			n.children[i+node.elementsCount] = n.children[i-1]
+			n.siblings[i+node.elementsCount] = n.siblings[i-1]
 		}
 
 		for i := 0; i < node.elementsCount+1; i++ {
-			n.children[i] = node.children[i]
+			n.siblings[i] = node.siblings[i]
 		}
 	}
 
@@ -82,10 +82,10 @@ func (n *treeNode) mergeLeft(node *treeNode) {
 func (n *treeNode) mergeRight(node *treeNode) {
 	if !node.leaf {
 		for i := 0; i < node.elementsCount+1; i++ {
-			n.children[n.elementsCount+1+i] = node.children[i]
+			n.siblings[n.elementsCount+1+i] = node.siblings[i]
 		}
 
-		n.values[n.elementsCount] = node.children[0].values[0]
+		n.values[n.elementsCount] = node.siblings[0].values[0]
 		n.elementsCount++
 	}
 
@@ -125,16 +125,16 @@ func (n *treeNode) prependElement(val int) {
 }
 
 func (n *treeNode) popChildren() *treeNode {
-	temp := n.children[n.elementsCount]
-	n.children[n.elementsCount] = nil
+	temp := n.siblings[n.elementsCount]
+	n.siblings[n.elementsCount] = nil
 	return temp
 }
 
 func (n *treeNode) prependChildren(c *treeNode) {
 	for i := n.elementsCount; i >= 0; i-- {
-		n.children[i+1] = n.children[i]
+		n.siblings[i+1] = n.siblings[i]
 	}
-	n.children[0] = c
+	n.siblings[0] = c
 }
 
 func (n treeNode) sibling(i int) *treeNode {
@@ -146,7 +146,7 @@ func (n treeNode) sibling(i int) *treeNode {
 		return nil
 	}
 
-	d := n.children[i]
+	d := n.siblings[i]
 	if d == nil {
 		return nil
 	}
@@ -156,15 +156,23 @@ func (n treeNode) sibling(i int) *treeNode {
 
 func (n *treeNode) deleteSibling(pos int) {
 
+	if pos-1 >= 0 {
+		n.siblings[pos-1].nextLeaf = n.siblings[pos].nextLeaf
+	}
+
+	if pos+1 <= n.elementsCount {
+		n.siblings[pos+1].prevLeaf = n.siblings[pos].prevLeaf
+	}
+
 	for pos < n.elementsCount {
-		n.children[pos] = n.children[pos+1]
+		n.siblings[pos] = n.siblings[pos+1]
 		if pos < n.elementsCount-1 {
 			n.values[pos] = n.values[pos+1]
 		}
 		pos++
 	}
 
-	n.children[pos] = nil
+	n.siblings[pos] = nil
 	n.values[pos-1] = 0
 	n.elementsCount--
 }
@@ -180,7 +188,7 @@ func (n treeNode) traverse(lvl int) string {
 	s += fmt.Sprint(" (", n.elementsCount, ")")
 
 	var c string
-	for _, v := range n.children {
+	for _, v := range n.siblings {
 		if v != nil {
 			c += v.traverse(lvl + 1)
 		}
@@ -238,8 +246,8 @@ func (n *treeNode) splitNode(parent *treeNode, degree int, pos int) *treeNode {
 		if !n.leaf {
 			midSlot = 1
 			for i := mid + 1; i <= n.elementsCount+1; i++ {
-				rightNode.children[i-mid-1] = n.children[i]
-				n.children[i] = nil
+				rightNode.siblings[i-mid-1] = n.siblings[i]
+				n.siblings[i] = nil
 			}
 		}
 
@@ -264,9 +272,14 @@ func (n *treeNode) splitNode(parent *treeNode, degree int, pos int) *treeNode {
 		split()
 
 		parent.values[parent.elementsCount] = midVal
-		parent.children[parent.elementsCount] = n
-		parent.children[parent.elementsCount+1] = rightNode
+		parent.siblings[parent.elementsCount] = n
+		parent.siblings[parent.elementsCount+1] = rightNode
 		parent.elementsCount++
+
+		if rightNode.leaf {
+			n.nextLeaf = rightNode
+			rightNode.prevLeaf = n
+		}
 
 		return parent
 	}
@@ -278,10 +291,22 @@ func (n *treeNode) splitNode(parent *treeNode, degree int, pos int) *treeNode {
 	parent.values[pos] = midVal
 
 	for i := parent.elementsCount; i > pos; i-- {
-		parent.children[i+1] = parent.children[i]
+		parent.siblings[i+1] = parent.siblings[i]
 	}
-	parent.children[pos+1] = rightNode
+	parent.siblings[pos+1] = rightNode
 	parent.elementsCount++
+
+	if rightNode.leaf {
+		rightNode.prevLeaf = parent.siblings[pos]
+		if pos+2 <= parent.elementsCount && parent.siblings[pos+2] != nil {
+			rightNode.nextLeaf = parent.siblings[pos+2]
+			parent.siblings[pos+2].prevLeaf = rightNode
+		}
+
+		if parent.siblings[pos] != nil {
+			parent.siblings[pos].nextLeaf = rightNode
+		}
+	}
 
 	return parent
 }
@@ -416,7 +441,7 @@ func (n *treeNode) delete(val int) bool {
 
 		nextNode.values[nextNode.elementsCount] = n.value(nextNodeIndex)
 		n.values[nextNodeIndex] = key
-		nextNode.children[nextNode.elementsCount+1] = children
+		nextNode.siblings[nextNode.elementsCount+1] = children
 		nextNode.elementsCount++
 
 		return true

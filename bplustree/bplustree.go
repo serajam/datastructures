@@ -95,7 +95,7 @@ func (t *Tree) Search(val int) bool {
 			i++
 		}
 
-		node = node.children[i]
+		node = node.siblings[i]
 
 		if node == nil {
 			return false
@@ -131,12 +131,12 @@ func (t *Tree) Delete(val int) bool {
 	t.count--
 
 	if t.Root.elementsCount == 0 && !t.Root.leaf {
-		t.Root = t.Root.children[0]
+		t.Root = t.Root.siblings[0]
 		return true
 	}
 
 	if i := t.Root.keyIndex(val); i >= 0 {
-		t.Root.values[i] = t.Root.children[i+1].values[0]
+		t.Root.values[i] = t.Root.siblings[i+1].values[0]
 	}
 
 	return true

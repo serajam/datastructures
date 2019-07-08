@@ -7,6 +7,46 @@ import (
 	"time"
 )
 
+func TestInsertLinkedList(t *testing.T) {
+	tree := New(5)
+	r := tree.Root
+	var i int
+
+	add := 50
+
+	for i = add; i > 0; i-- {
+		tree.Insert(i * 10)
+	}
+
+	if tree.count != add {
+		log.Fatal("Expected", add, "elements", "but got", tree.count)
+	}
+
+	for i = add; i > 0; i-- {
+		if tree.Search(i*10) != true {
+			log.Fatal("Not found:", i*10)
+		}
+	}
+
+	tree.Delete(310)
+	tree.Delete(320)
+	tree.Delete(330)
+	tree.Delete(340)
+	tree.Delete(350)
+
+	leaf := r
+	total := 0
+	for leaf != nil {
+		total += leaf.elementsCount
+		leaf = leaf.nextLeaf
+	}
+
+	if total != tree.count {
+		log.Fatalln("Elements count and real leaf values doesnt much")
+	}
+
+}
+
 func TestBPlusDelete(t *testing.T) {
 	tree := New(5)
 	var i int

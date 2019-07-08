@@ -19,13 +19,18 @@ type treeNode struct {
 }
 
 func newNode(degree int, leaf bool) *treeNode {
-	return &treeNode{
+	n := &treeNode{
 		values:           make([]int, degree*2-1),
-		children:         make([]*treeNode, degree*2),
 		leaf:             leaf,
 		degree:           degree,
 		maxElementsCount: degree*2 - 1,
 	}
+
+	if !leaf {
+		n.children = make([]*treeNode, degree*2)
+	}
+
+	return n
 }
 
 func (n treeNode) value(i int) int {

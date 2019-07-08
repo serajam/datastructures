@@ -130,7 +130,7 @@ func (t *Tree) Delete(val int) bool {
 
 	t.count--
 
-	if t.Root.elementsCount == 0 {
+	if t.Root.elementsCount == 0 && !t.Root.leaf {
 		t.Root = t.Root.children[0]
 		return true
 	}

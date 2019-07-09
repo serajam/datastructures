@@ -168,3 +168,67 @@ func TestInsertAndDelete2(t *testing.T) {
 		log.Fatal("Expected", add-del+1, "elements", "but got", tree.count)
 	}
 }
+
+func TestInsertAndDelete3(t *testing.T) {
+	tree := New(5)
+	r := tree.Root
+	var i int
+
+	add := 200000
+
+	for i = add; i > 0; i-- {
+		tree.Insert(i * 10)
+	}
+
+	if tree.count != add {
+		log.Fatal("Expected", add, "elements", "but got", tree.count)
+	}
+
+	del := 199999
+
+	for i = del; i > 0; i-- {
+		tree.Delete(i * 10)
+	}
+
+	if tree.count != add-del {
+		log.Fatal("Expected", add-del, "elements", "but got", tree.count)
+	}
+
+	add = 200000
+
+	for i = add; i > 0; i-- {
+		tree.Insert(i)
+	}
+
+	if tree.count != add+1 {
+		log.Fatal("Expected", add, "elements", "but got", tree.count)
+	}
+
+	del = 199999
+
+	for i = del; i > 0; i-- {
+		tree.Delete(i)
+	}
+
+	if tree.count != add-del+1 {
+		log.Fatal("Expected", add-del+1, "elements", "but got", tree.count)
+	}
+
+	leaf := r
+	total := 0
+	for leaf != nil {
+		total += leaf.elementsCount
+		leaf = leaf.nextLeaf
+	}
+
+	delRandom := 10000
+	rand.Seed(time.Now().Unix())
+
+	for i = delRandom; i > 0; i-- {
+		tree.Delete(rand.Intn(add) + 1)
+	}
+
+	if total != tree.count {
+		log.Fatalln("Elements count and real leaf values doesn't much")
+	}
+}

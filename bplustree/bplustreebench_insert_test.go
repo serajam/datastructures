@@ -29,7 +29,7 @@ func BenchmarkInsertDegree5(b *testing.B) {
 }
 
 func BenchmarkInsertDegree20(b *testing.B) {
-	tree := New(5)
+	tree := New(20)
 	for n := 0; n < b.N; n++ {
 		tree.Insert(data[n])
 	}
@@ -49,8 +49,8 @@ func BenchmarkInsertDegree50(b *testing.B) {
 	}
 }
 
-func BenchmarkInsertDegree100(b *testing.B) {
-	tree := New(100)
+func BenchmarkInsertDegree80(b *testing.B) {
+	tree := New(80)
 	for n := 0; n < b.N; n++ {
 		tree.Insert(data[n])
 	}

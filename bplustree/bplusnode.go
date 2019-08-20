@@ -1,3 +1,5 @@
+// Package bplustree provides implementation of b+ tree algorithm
+// it offers search, insert, delete methods
 package bplustree
 
 import (
@@ -470,8 +472,8 @@ func (n *treeNode) delete(val int) bool {
 	}
 
 	// merge right to left
-	if leftSIbling := n.sibling(nextNodeIndex - 1); leftSIbling != nil {
-		leftSIbling.mergeRight(nextNode)
+	if leftSibling := n.sibling(nextNodeIndex - 1); leftSibling != nil {
+		leftSibling.mergeRight(nextNode)
 		n.deleteSibling(nextNodeIndex)
 
 		return true

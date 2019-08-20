@@ -1,4 +1,4 @@
-// Package bplustree provides implemantaion of b+ tree algorithm
+// Package bplustree provides implementation of b+ tree algorithm
 // it offers search, insert, delete methods
 package bplustree
 

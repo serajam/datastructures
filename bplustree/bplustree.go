@@ -72,10 +72,8 @@ func (t *Tree) Insert(val int) {
 		node = node.splitNode(nil, t.Degree, -1)
 		t.Root = node
 	} else {
-		node = node.splitNode(parent, t.Degree, nextNodeIndex)
+		node.splitNode(parent, t.Degree, nextNodeIndex)
 	}
-
-	return
 }
 
 // Search searches for value

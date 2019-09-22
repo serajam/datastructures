@@ -39,10 +39,6 @@ func (n treeNode) value(i int) int {
 	return n.values[i]
 }
 
-func (n treeNode) lastValue() int {
-	return n.values[n.elementsCount]
-}
-
 func (n treeNode) keyIndex(val int) int {
 	var i int
 	for i < n.elementsCount {
